@@ -5,42 +5,33 @@ import { NextAdapter, collectSourceFiles } from "../adapter-next/index.ts";
 import { indexDirectory } from "../indexer.ts";
 import { route } from "../kernel/index.ts";
 import { extractedCalls, naiveCallClaims } from "./naive.ts";
+import {
+  formatScore,
+  missingAmbiguous,
+  missingEntries,
+  missingUnresolved,
+  scoreExtracted,
+} from "./score.ts";
 
 const FIXTURES = resolve(process.cwd(), "fixtures");
 const CORPUS = resolve(process.cwd(), "corpus/ai-chatbot");
 
-describe("wrong-edge rate vs name-only matching", () => {
-  it("Graphify-shaped name matching emits fake EXTRACTED calls; we do not", async () => {
+describe("fixture answer sheet", () => {
+  it("scores name-only and code-graph against the written answers", async () => {
     const files = await collectSourceFiles(FIXTURES);
     const batch = new NextAdapter().emit(files);
-    const naive = naiveCallClaims(files);
-    const honest = extractedCalls(batch);
-    const honestKeys = new Set(
-      honest.map((claim) => `${claim.fromFile}:${claim.fromName}->${claim.toFile}:${claim.toName}`),
-    );
-    const wrong = naive.filter(
-      (claim) =>
-        !honestKeys.has(`${claim.fromFile}:${claim.fromName}->${claim.toFile}:${claim.toName}`),
-    );
-    expect(naive.length).toBeGreaterThan(honest.length);
-    expect(wrong.length).toBeGreaterThan(0);
-    expect(
-      wrong.some(
-        (claim) =>
-          claim.fromFile.endsWith("name-collision/app.ts") &&
-          claim.toFile.endsWith("git/repo.ts") &&
-          claim.callee === "save",
-      ),
-    ).toBe(true);
-    expect(
-      honest.some(
-        (claim) =>
-          claim.fromFile.endsWith("name-collision/app.ts") &&
-          claim.toFile.endsWith("git/repo.ts"),
-      ),
-    ).toBe(false);
-    const rate = wrong.length / naive.length;
-    expect(rate).toBeGreaterThan(0);
+    const naive = scoreExtracted("name-only", naiveCallClaims(files));
+    const ours = scoreExtracted("code-graph", extractedCalls(batch));
+
+    expect(ours.missingRequired, formatScore(ours)).toEqual([]);
+    expect(ours.forbiddenHits, formatScore(ours)).toEqual([]);
+    expect(ours.wrongEdgeRate).toBe(0);
+    expect(missingUnresolved(batch)).toEqual([]);
+    expect(missingAmbiguous(batch)).toEqual([]);
+    expect(missingEntries(batch)).toEqual([]);
+
+    expect(naive.forbiddenHits.length).toBeGreaterThan(0);
+    expect(naive.wrongEdgeRate).toBeGreaterThan(ours.wrongEdgeRate);
   });
 });
 

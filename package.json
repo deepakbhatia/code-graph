@@ -14,7 +14,7 @@
     "typecheck": "tsc --noEmit",
     "index": "tsx src/cli.ts index",
     "mcp": "tsx src/mcp/server.ts",
-    "eval:fixtures": "tsx src/cli.ts index fixtures --db .code-graph/fixtures.sqlite"
+    "eval:fixtures": "node --experimental-strip-types src/eval/report.ts"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
