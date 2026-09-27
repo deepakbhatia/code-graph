@@ -8,12 +8,14 @@ You index once. Then you ask:
 - **impact** — who calls this, what it calls, which tests import it
 - **route** — what handles `POST /api/chat`, and the functions that call chain reaches
 
-| Question | grep | This |
-|---|---|---|
-| What breaks if I change this function? | A list of the same word | The functions that call it, and what those call |
-| What does `POST /api/chat` run? | You hunt for the file, then follow imports | The handler and the chain under it |
-| Two things named `find` — which one is this? | They look the same | It follows the import, so they stay separate |
-| Are there tests for this change? | You guess from file names | Tests that import this module |
+
+| Question                                     | grep                                       | This                                            |
+| -------------------------------------------- | ------------------------------------------ | ----------------------------------------------- |
+| What breaks if I change this function?       | A list of the same word                    | The functions that call it, and what those call |
+| What does `POST /api/chat` run?              | You hunt for the file, then follow imports | The handler and the path that follows           |
+| Two things named `find` — which one is this? | They look the same                         | It follows the import, so they stay separate    |
+| Are there tests for this change?             | You guess from file names                  | Tests that import this module                   |
+
 
 ## Setup
 
